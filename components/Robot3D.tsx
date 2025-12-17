@@ -104,26 +104,27 @@ const LegoLight = ({ position, color }: { position: [number, number, number], co
   const c = color.toLowerCase();
   const isOff = c === 'black' || c === '#000000' || c === '#000';
   
-  const displayColor = isOff ? '#555' : color;
-  const intensity = isOff ? 0 : 2;
+  const displayColor = isOff ? '#333' : color;
+  const intensity = isOff ? 0 : 3;
 
   return (
     <group position={position}>
-      {/* Housing (Cyan for style) */}
+      {/* Housing (Transparent Clear/Glass) */}
       <mesh position={[0, 0.25, 0]} castShadow>
          <boxGeometry args={[0.25, 0.3, 0.25]} />
          <meshStandardMaterial 
-            color={THEME.cyan} 
+            color="#ffffff" 
             transparent 
-            opacity={0.8} 
-            roughness={0.2} 
+            opacity={0.3} 
+            roughness={0.1} 
+            metalness={0.1}
          />
       </mesh>
       
       {/* Internal Bulb / Light Source */}
       <mesh position={[0, 0.25, 0]}>
          {/* Made slightly larger to ensure visibility */}
-         <boxGeometry args={[0.15, 0.2, 0.15]} /> 
+         <boxGeometry args={[0.18, 0.22, 0.18]} /> 
          <meshStandardMaterial 
             color={displayColor} 
             emissive={displayColor}
@@ -137,8 +138,8 @@ const LegoLight = ({ position, color }: { position: [number, number, number], co
           <pointLight 
             position={[0, 0.3, 0]} 
             color={displayColor} 
-            intensity={2} 
-            distance={2} 
+            intensity={1.5} 
+            distance={3} 
             decay={2} 
           />
       )}
@@ -254,48 +255,84 @@ const ColorSensor = ({ position }: { position: [number, number, number] }) => {
     );
 };
 
-// SPIKE Prime / Ultrasonic Sensor Design
+// SPIKE Prime / Ultrasonic Sensor Design (Updated to match circular photo with red glow)
 const UltrasonicSensor = ({ position }: { position: [number, number, number] }) => {
     return (
         <group position={position}>
-             {/* Main Housing (White) */}
-             <mesh castShadow>
+             {/* 1. Main Housing (White Body) - Background */}
+             <mesh castShadow position={[0, 0, -0.1]}>
                 <boxGeometry args={[1.4, 0.6, 0.4]} />
                 <meshStandardMaterial color={THEME.white} roughness={0.2} />
              </mesh>
 
-             {/* Dark Faceplate (Black Mask) */}
-             <mesh position={[0, 0, 0.205]}>
-                <boxGeometry args={[1.3, 0.5, 0.05]} />
-                <meshStandardMaterial color="#111" />
-             </mesh>
+             {/* 2. The Binocular Face (Black) - Replacing the square faceplate */}
+             <group position={[0, 0, 0.15]}>
+                 {[-1, 1].map((side) => (
+                     <group key={side} position={[side * 0.35, 0, 0]}>
+                        {/* The Black Cylinder Housing the eye (The "Binocular" tube) */}
+                        <mesh rotation={[Math.PI/2, 0, 0]}>
+                            <cylinderGeometry args={[0.28, 0.28, 0.2, 32]} />
+                            <meshStandardMaterial color="#111" roughness={0.2} />
+                        </mesh>
 
-             {/* Two Distinct Eyes */}
-             {[-1, 1].map((side) => (
-                 <group key={side} position={[side * 0.35, 0, 0.23]}>
-                    {/* Outer Ring / Bezel */}
-                    <mesh rotation={[Math.PI/2, 0, 0]}>
-                        <torusGeometry args={[0.18, 0.03, 16, 32]} />
-                        <meshStandardMaterial color="#333" />
-                    </mesh>
-                    {/* Inner Black Sensor (Concave look) */}
-                    <mesh rotation={[Math.PI/2, 0, 0]}>
-                        <circleGeometry args={[0.17, 32]} />
-                        <meshStandardMaterial color="#000" metalness={0.8} roughness={0.2} />
-                    </mesh>
-                    {/* Shiny Reflection Glint */}
-                     <mesh rotation={[Math.PI/2, 0, 0]} position={[0.05, 0.05, 0.01]}>
-                        <circleGeometry args={[0.03, 16]} />
-                        <meshBasicMaterial color="#333" transparent opacity={0.4} />
-                    </mesh>
-                 </group>
-             ))}
+                        {/* The Red Glow Ring (Vertical) */}
+                        {/* Rotation [0,0,0] makes Torus face forward (Z axis) */}
+                        <mesh rotation={[0, 0, 0]} position={[0, 0, 0.101]}>
+                            <torusGeometry args={[0.18, 0.035, 16, 32]} />
+                            <meshStandardMaterial 
+                                color="#ff0000" 
+                                emissive="#ff0000" 
+                                emissiveIntensity={2} 
+                                transparent 
+                                opacity={0.9} 
+                            />
+                        </mesh>
+                        
+                        {/* Inner Metal Mesh (Vertical) */}
+                        {/* Rotation [0,0,0] makes Circle face forward (Z axis) */}
+                         <mesh rotation={[0, 0, 0]} position={[0, 0, 0.08]}>
+                             <circleGeometry args={[0.15, 32]} />
+                             <meshStandardMaterial color="#444" metalness={0.8} roughness={0.6} />
+                        </mesh>
+                        
+                         {/* Mesh Grid Texture (Crosshatch) */}
+                        <group rotation={[0, 0, Math.PI/4]} position={[0, 0, 0.081]}>
+                             {[...Array(5)].map((_, i) => (
+                                 <mesh key={i} position={[(i-2)*0.06, 0, 0]}>
+                                     <boxGeometry args={[0.005, 0.25, 0.001]} />
+                                     <meshBasicMaterial color="#111" opacity={0.5} transparent />
+                                 </mesh>
+                             ))}
+                             <mesh rotation={[0, 0, Math.PI/2]}>
+                                  {[...Array(5)].map((_, i) => (
+                                     <mesh key={i} position={[(i-2)*0.06, 0, 0]}>
+                                         <boxGeometry args={[0.005, 0.25, 0.001]} />
+                                         <meshBasicMaterial color="#111" opacity={0.5} transparent />
+                                     </mesh>
+                                 ))}
+                             </mesh>
+                        </group>
+                     </group>
+                 ))}
+                 
+                 {/* Center Bridge (Black) */}
+                 <mesh position={[0, 0, 0]}>
+                    <boxGeometry args={[0.3, 0.25, 0.1]} />
+                    <meshStandardMaterial color="#111" />
+                 </mesh>
+             </group>
              
-             {/* Connection Detail on Top */}
-             <mesh position={[0.4, 0.3, -0.1]}>
-                <boxGeometry args={[0.3, 0.1, 0.3]} />
-                <meshStandardMaterial color={THEME.darkGrey} />
-             </mesh>
+             {/* 3. Bottom Connector (Grey Technic Beam) */}
+             <group position={[0, -0.35, 0]}>
+                 <mesh>
+                     <boxGeometry args={[0.3, 0.2, 0.3]} />
+                     <meshStandardMaterial color={THEME.lightGrey} />
+                 </mesh>
+                 <mesh rotation={[0, 0, Math.PI/2]}>
+                     <cylinderGeometry args={[0.08, 0.08, 0.31, 16]} />
+                     <meshStandardMaterial color="#111" />
+                 </mesh>
+             </group>
         </group>
     );
 };

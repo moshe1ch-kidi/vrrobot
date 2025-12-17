@@ -275,11 +275,25 @@ export const initBlockly = () => {
 
   Blockly.Blocks['robot_led'] = {
     init: function() {
+      // Define a standard palette for the robot LED (Simulating SPIKE/EV3 colors)
+      const colourOptions = [
+        "#FF0000", // Red
+        "#00FF00", // Green
+        "#0000FF", // Blue
+        "#FFFF00", // Yellow
+        "#00FFFF", // Cyan
+        "#FF00FF", // Magenta
+        "#FFFFFF", // White
+        "#FFA500"  // Orange
+      ];
+
       this.appendDummyInput()
           .appendField("Set LED")
           .appendField(new Blockly.FieldDropdown([["Left","LEFT"], ["Right","RIGHT"], ["Both","BOTH"]]), "SIDE")
           .appendField("color")
-          .appendField(new FieldColorDropper("#ff0000"), "COLOR"); // Using 3D Dropper
+          // Use standard FieldColour for palette, NOT FieldColorDropper
+          // IMPORTANT: 2nd arg is validator (null), 3rd arg is config
+          .appendField(new Blockly.FieldColour("#ff0000", null, { colourOptions, columns: 4 }), "COLOR");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setStyle('looks_blocks');
@@ -371,7 +385,7 @@ export const initBlockly = () => {
     init: function() {
       this.appendDummyInput()
           .appendField("touching color")
-          // Use FieldColorDropper instead of FieldColour
+          // Use FieldColorDropper for sensing environment colors
           .appendField(new FieldColorDropper("#ffbf00"), "COLOR")
           .appendField("?");
       this.setOutput(true, "Boolean");
