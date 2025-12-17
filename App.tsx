@@ -207,6 +207,7 @@ const App: React.FC = () => {
     ledLeftColor: 'black',
     ledRightColor: 'black',
     isMoving: false,
+    isTouching: false,
   };
 
   const [robotState, setRobotState] = useState<RobotState>(initialState);
@@ -273,9 +274,13 @@ const App: React.FC = () => {
             let newX = robotRef.current.x + dx;
             let newZ = robotRef.current.z + dz;
 
+            // Update isTouching visual state every step
+            const sensorData = calculateSensorReadings(newX, newZ, robotRef.current.rotation, activeChallengeIdRef.current);
+            
             updateRobotState({
                 x: newX,
-                z: newZ
+                z: newZ,
+                isTouching: sensorData.isTouching
             });
 
             // Update History
@@ -305,7 +310,14 @@ const App: React.FC = () => {
             checkAbort();
             await new Promise(r => setTimeout(r, stepTime));
             const newRotation = robotRef.current.rotation + angPerStep;
-            updateRobotState({ rotation: newRotation });
+            
+            // Recalculate touch during turn
+            const sensorData = calculateSensorReadings(robotRef.current.x, robotRef.current.z, newRotation, activeChallengeIdRef.current);
+
+            updateRobotState({ 
+                rotation: newRotation,
+                isTouching: sensorData.isTouching
+            });
             
             // Update History
             historyRef.current.totalRotation += angPerStep;
@@ -594,7 +606,6 @@ const App: React.FC = () => {
                         onColorSelect={handleColorPicked}
                     />
                 )}
-
                 <OrbitControls 
                     makeDefault 
                     minDistance={3} 
@@ -626,7 +637,7 @@ const App: React.FC = () => {
                         </button>
                     </div>
                     <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-100">
-                        {CHALLENGES.map((challenge) => (
+                        {CHALLENGES.map((challenge, index) => (
                             <button 
                                 key={challenge.id}
                                 onClick={() => selectChallenge(challenge)}
@@ -644,7 +655,7 @@ const App: React.FC = () => {
                                     </span>
                                     {activeChallenge?.id === challenge.id && <CheckCircle size={20} className="text-blue-500" />}
                                 </div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{challenge.title}</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">{index + 1}. {challenge.title}</h3>
                                 <p className="text-gray-600 text-sm leading-relaxed">{challenge.description}</p>
                             </button>
                         ))}

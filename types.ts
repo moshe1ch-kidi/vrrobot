@@ -9,6 +9,7 @@ export interface RobotState {
   ledLeftColor: string;
   ledRightColor: string;
   isMoving: boolean;
+  isTouching: boolean; // Visual state for the touch sensor plunger
 }
 
 export type RobotCommand = 
@@ -45,14 +46,5 @@ declare global {
     showBlocklyColorPicker: (
       onPick: (newColor: string) => void
     ) => void;
-  }
-}
-
-// Augment React.JSX namespace (React 18+)
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
   }
 }
