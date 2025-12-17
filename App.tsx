@@ -1,7 +1,9 @@
+
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { Play, RotateCcw, Code2, Ruler, Trophy, CheckCircle, X } from 'lucide-react';
+import { Play, RotateCcw, Code2, Ruler, Trophy, CheckCircle, X, Video } from 'lucide-react';
+import { Vector3 } from 'three';
 import BlocklyEditor from './components/BlocklyEditor';
 import Robot3D from './components/Robot3D';
 import SimulationEnvironment from './components/Environment';
@@ -142,6 +144,38 @@ const calculateSensorReadings = (x: number, z: number, rotation: number, challen
     return { gyro, isTouching, distance, color, intensity, rawDecimalColor };
 };
 
+// --- CAMERA FOLLOWER COMPONENT ---
+const CameraFollower = ({ targetX, targetZ, isFollowing }: { targetX: number, targetZ: number, isFollowing: boolean }) => {
+    const { camera, controls } = useThree();
+    const lastTarget = useRef(new Vector3(targetX, 0, targetZ));
+    
+    useFrame(() => {
+        // Current robot position
+        const currentTarget = new Vector3(targetX, 0, targetZ);
+        
+        // Calculate how much the robot moved since last frame
+        const delta = new Vector3().subVectors(currentTarget, lastTarget.current);
+        
+        if (isFollowing && controls) {
+            // Apply that same movement to the camera (so relative view stays same)
+            camera.position.add(delta);
+            
+            // And update the controls center to look at new robot pos
+            // @ts-ignore
+            if (controls.target) {
+                // @ts-ignore
+                controls.target.add(delta);
+            }
+        } else if (!isFollowing && controls) {
+             // If not following, we still update the reference so when we toggle ON,
+             // it doesn't jump. But we don't move camera.
+        }
+
+        lastTarget.current.copy(currentTarget);
+    });
+
+    return null;
+}
 
 const App: React.FC = () => {
   const [generatedCode, setGeneratedCode] = useState<string>('');
@@ -150,6 +184,7 @@ const App: React.FC = () => {
   // Tools State
   const [isRulerActive, setIsRulerActive] = useState(false);
   const [isColorPickerActive, setIsColorPickerActive] = useState(false);
+  const [isCameraFollowing, setIsCameraFollowing] = useState(false);
   const [pickerHoverColor, setPickerHoverColor] = useState<string | null>(null);
   
   // Challenge State
@@ -454,6 +489,10 @@ const App: React.FC = () => {
       setPickerHoverColor(null);
   };
 
+  const toggleCameraFollow = () => {
+      setIsCameraFollowing(!isCameraFollowing);
+  };
+
   const handleColorPicked = (hex: string) => {
       setPickerHoverColor(hex);
       setIsColorPickerActive(false);
@@ -540,6 +579,7 @@ const App: React.FC = () => {
 
                 <button 
                     onClick={toggleRuler}
+                    title="Measure distance"
                     className={`flex items-center gap-2 px-4 py-2 rounded font-bold transition-colors whitespace-nowrap ${
                         isRulerActive
                         ? 'bg-blue-600 text-white shadow-inner' 
@@ -548,6 +588,18 @@ const App: React.FC = () => {
                 >
                     <Ruler size={18} />
                     {isRulerActive ? 'Close Ruler' : 'Measure'}
+                </button>
+
+                <button 
+                    onClick={toggleCameraFollow}
+                    title="Follow Camera"
+                    className={`flex items-center gap-2 px-4 py-2 rounded font-bold transition-colors whitespace-nowrap ${
+                        isCameraFollowing
+                        ? 'bg-blue-600 text-white shadow-inner' 
+                        : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
+                    }`}
+                >
+                    <Video size={18} />
                 </button>
             </div>
             <div className="flex-1 relative">
@@ -596,6 +648,7 @@ const App: React.FC = () => {
             <Canvas shadows camera={{ position: [5, 8, 8], fov: 45 }}>
                 <SimulationEnvironment challengeId={activeChallenge?.id} />
                 <Robot3D state={robotState} />
+                <CameraFollower targetX={robotState.x} targetZ={robotState.z} isFollowing={isCameraFollowing} />
                 
                 {/* Tools */}
                 {isRulerActive && <RulerTool key="ruler" />}
