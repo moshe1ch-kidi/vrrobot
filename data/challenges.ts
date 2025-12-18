@@ -1,3 +1,4 @@
+
 import { RobotState } from '../types';
 
 export interface Challenge {
@@ -22,7 +23,7 @@ export const CHALLENGES: Challenge[] = [
         title: 'כיוונים - ניווט בחדר',
         description: 'סע 1 מטר קדימה, פנה ימינה ב-90 מעלות וסע עוד חצי מטר.',
         difficulty: 'Easy',
-        check: (start, end, history) => history.maxDistanceMoved >= 12 && Math.abs(history.totalRotation) >= 85
+        check: (start, end, history) => history.maxDistanceMoved >= 11 && Math.abs(history.totalRotation) >= 85
     },
     {
         id: 'c2',

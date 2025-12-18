@@ -16,8 +16,9 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
       const isLineFollow = ['c21'].includes(challengeId || '');
       const isSlope = challengeId === 'c3';
       const isBrakingTrack = challengeId === 'c4';
+      const isNavigationTrack = challengeId === 'c1';
 
-      return { isFrontWall, isSlalom, isColors, isLineFollow, isSlope, isBrakingTrack };
+      return { isFrontWall, isSlalom, isColors, isLineFollow, isSlope, isBrakingTrack, isNavigationTrack };
   }, [challengeId]);
 
   return (
@@ -57,6 +58,54 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
         <meshBasicMaterial color="#ff0000" />
       </mesh>
 
+      {/* NAVIGATION TRACK for c1 (L-Shape) */}
+      {config.isNavigationTrack && (
+          <group position={[0, 0, 0]}>
+              {/* Segment 1: Forward 100cm (Z from 0 to -10) */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -5]} receiveShadow>
+                  <planeGeometry args={[2.5, 10]} />
+                  <meshStandardMaterial color="#bae6fd" transparent opacity={0.9} />
+              </mesh>
+              {/* Center Dotted Line for Segment 1 */}
+              {[...Array(5)].map((_, i) => (
+                  <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -i * 2 - 1]}>
+                      <planeGeometry args={[0.15, 1.2]} />
+                      <meshBasicMaterial color="#0284c7" />
+                  </mesh>
+              ))}
+
+              {/* Segment 2: Right 50cm (X from 0 to 5 at Z=-10) */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.5, 0.015, -10]} receiveShadow>
+                  <planeGeometry args={[5, 2.5]} />
+                  <meshStandardMaterial color="#bae6fd" transparent opacity={0.9} />
+              </mesh>
+              {/* Center Dotted Line for Segment 2 */}
+              {[...Array(3)].map((_, i) => (
+                  <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[i * 2 + 1, 0.02, -10]}>
+                      <planeGeometry args={[1.2, 0.15]} />
+                      <meshBasicMaterial color="#0284c7" />
+                  </mesh>
+              ))}
+
+              {/* Labels - Removed font path to prevent loading errors */}
+              <Text position={[0, 0.05, 1.5]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.5} color="#0369a1">
+                START
+              </Text>
+              <Text position={[0, 0.05, -11.8]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.4} color="#0369a1">
+                TURN 90° RIGHT
+              </Text>
+              
+              {/* Finish Target */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[5, 0.025, -10]}>
+                  <ringGeometry args={[0.8, 1.1, 32]} />
+                  <meshBasicMaterial color="#16a34a" />
+              </mesh>
+              <Text position={[5, 0.05, -8.2]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.5} color="#15803d">
+                FINISH
+              </Text>
+          </group>
+      )}
+
       {/* RAMP for c3 (Uphill) */}
       {config.isSlope && (
           <group position={[0, 0, 0]}>
@@ -85,13 +134,10 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
       {/* BRAKING TRACK for c4 (Braking test) */}
       {config.isBrakingTrack && (
           <group position={[0, 0, 0]}>
-              {/* Asphalt Lane */}
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -15]} receiveShadow>
                   <planeGeometry args={[5, 30]} />
                   <meshStandardMaterial color="#334155" />
               </mesh>
-              
-              {/* White Side Lines */}
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2.4, 0.03, -15]}>
                   <planeGeometry args={[0.1, 30]} />
                   <meshBasicMaterial color="white" />
@@ -100,32 +146,26 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
                   <planeGeometry args={[0.1, 30]} />
                   <meshBasicMaterial color="white" />
               </mesh>
-
-              {/* Distance Markers (Every 5 units = 50cm in simulation scale) */}
               {[...Array(31)].map((_, i) => (
                   <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, -i]}>
                       <planeGeometry args={[4.8, 0.05]} />
                       <meshBasicMaterial color={i % 5 === 0 ? "white" : "#475569"} />
                   </mesh>
               ))}
-
-              {/* Danger Zone at the end (Z < -25) */}
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, -28]}>
                   <planeGeometry args={[5, 4]} />
                   <meshStandardMaterial color="#ef4444" opacity={0.6} transparent />
               </mesh>
-
               <Text position={[0, 0.05, -2]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.4} color="white">
                 BRAKING TEST
               </Text>
-              
               <Text position={[-3, 0.05, -10]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="#475569">
                 100 CM
               </Text>
               <Text position={[-3, 0.05, -20]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="#475569">
                 200 CM
               </Text>
-              <Text position={[0, 0.1, -30]} fontSize={0.6} color="#ef4444" rotation={[0,0,0]}>
+              <Text position={[0, 0.1, -30]} fontSize={0.6} color="#ef4444">
                 DANGER!
               </Text>
           </group>
