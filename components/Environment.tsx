@@ -9,14 +9,14 @@ interface EnvironmentProps {
 
 const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
   
-  // Logic to determine environment layout based on challenge
   const config = useMemo(() => {
       const isFrontWall = ['c9', 'c14', 'c15', 'c16', 'c19', 'c20'].includes(challengeId || '');
       const isSlalom = ['c7', 'c8'].includes(challengeId || '');
       const isColors = ['c13', 'c14'].includes(challengeId || '');
       const isLineFollow = ['c21'].includes(challengeId || '');
+      const isSlope = challengeId === 'c3';
 
-      return { isFrontWall, isSlalom, isColors, isLineFollow };
+      return { isFrontWall, isSlalom, isColors, isLineFollow, isSlope };
   }, [challengeId]);
 
   return (
@@ -36,7 +36,7 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
         <meshStandardMaterial color="#ffffff" />
       </mesh>
 
-      {/* Red Grid Pattern - Matching the reference image */}
+      {/* Red Grid Pattern */}
       <Grid 
         infiniteGrid={false}
         args={[100, 100]}
@@ -50,13 +50,46 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
 
       <ContactShadows resolution={1024} scale={20} blur={2} opacity={0.5} far={10} color="#000000" />
       
-      {/* Starting Box (Area) */}
+      {/* Starting Box */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <ringGeometry args={[1.4, 1.5, 4, 1, Math.PI/4]} />
         <meshBasicMaterial color="#ff0000" />
       </mesh>
 
-      {/* --- DYNAMIC OBJECTS --- */}
+      {/* RAMP for c3 (Uphill) - Corrected coordinates */}
+      {config.isSlope && (
+          <group position={[0, 0, 0]}>
+              {/* 
+                  Slope starts at Z = -1.5, ends at Z = -16.5 (Length = 15)
+                  Height at start = 0, Height at end = 1.0
+                  Midpoint Z = -9.0, Midpoint Y = 0.5
+                  Angle = atan(1/15) = 0.0665
+              */}
+              <mesh rotation={[0.0665, 0, 0]} position={[0, 0.5, -9]} receiveShadow castShadow>
+                  <boxGeometry args={[4.2, 0.05, 15]} />
+                  <meshStandardMaterial color="#f8fafc" />
+              </mesh>
+              
+              {/* Side Rails matched to slope */}
+              <mesh position={[-2.1, 0.6, -9]} rotation={[0.0665, 0, 0]}>
+                  <boxGeometry args={[0.1, 0.3, 15]} />
+                  <meshStandardMaterial color="#ff4d4d" />
+              </mesh>
+              <mesh position={[2.1, 0.6, -9]} rotation={[0.0665, 0, 0]}>
+                  <boxGeometry args={[0.1, 0.3, 15]} />
+                  <meshStandardMaterial color="#ff4d4d" />
+              </mesh>
+
+              {/* End Platform */}
+              <mesh position={[0, 0.5, -20]} receiveShadow castShadow>
+                  <boxGeometry args={[4.2, 1.0, 8]} />
+                  <meshStandardMaterial color="#ffffff" />
+              </mesh>
+              <Text position={[0, 1.1, -20]} fontSize={0.6} color="#ff4d4d">
+                FINISH
+              </Text>
+          </group>
+      )}
 
       {/* LINE FOLLOWER TRACK */}
       {config.isLineFollow && (
@@ -68,26 +101,14 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
          </group>
       )}
 
-      {/* THE WALL - Only shows when needed for challenges */}
+      {/* THE WALL */}
       {config.isFrontWall && (
           <group position={[0, 0.5, -8]}> 
             <mesh receiveShadow castShadow>
                 <boxGeometry args={[6, 1, 0.5]} /> 
                 <meshStandardMaterial color="#ef4444" roughness={0.2} />
             </mesh>
-            <mesh position={[0, 0.51, 0.26]} rotation={[0, 0, 0]}>
-                <planeGeometry args={[6, 1]} />
-                <meshBasicMaterial color="#b91c1c" />
-            </mesh>
-             <Text
-                position={[0, 0.2, 0.3]}
-                fontSize={0.4}
-                color="white"
-                anchorX="center"
-                anchorY="middle"
-            >
-                OBSTACLE
-            </Text>
+            <Text position={[0, 0.2, 0.3]} fontSize={0.4} color="white">OBSTACLE</Text>
           </group>
       )}
 
@@ -99,10 +120,6 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
                       <mesh castShadow position={[0, 0.25, 0]}>
                           <cylinderGeometry args={[0.05, 0.15, 0.5, 16]} />
                           <meshStandardMaterial color="orange" />
-                      </mesh>
-                      <mesh position={[0, 0, 0]}>
-                          <cylinderGeometry args={[0.2, 0.2, 0.02, 16]} />
-                          <meshStandardMaterial color="black" />
                       </mesh>
                   </group>
               ))}
@@ -122,7 +139,6 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
                </mesh>
           </group>
       )}
-
     </>
   );
 };
