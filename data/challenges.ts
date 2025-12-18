@@ -7,6 +7,9 @@ export interface Challenge {
     description: string;
     difficulty: 'Easy' | 'Medium' | 'Hard';
     check: (startState: RobotState, endState: RobotState, history: SimulationHistory) => boolean;
+    startPosition?: { x: number; z: number };
+    startRotation?: number;
+    startCameraPosition?: [number, number, number];
 }
 
 export interface SimulationHistory {
@@ -23,7 +26,7 @@ export const CHALLENGES: Challenge[] = [
         title: 'כיוונים - ניווט בחדר',
         description: 'סע 1 מטר קדימה, פנה ימינה ב-90 מעלות וסע עוד חצי מטר.',
         difficulty: 'Easy',
-        check: (start, end, history) => history.maxDistanceMoved >= 12 && Math.abs(history.totalRotation) >= 85
+        check: (start, end, history) => history.maxDistanceMoved >= 11 && Math.abs(history.totalRotation) >= 85
     },
     {
         id: 'c2',
@@ -55,10 +58,13 @@ export const CHALLENGES: Challenge[] = [
     },
     {
         id: 'c6',
-        title: 'נורות - פנס איתות',
-        description: 'הבהב בנורת הבקר (כתום) למשך 2 שניות לפני שמתחילים פנייה.',
+        title: 'נורות - פנס איתות בצומת',
+        description: 'השתמש בצומת הדרכים! הבהב בנורת הבקר (כתום) למשך 2 שניות לפני שמתחילים פנייה ימינה.',
         difficulty: 'Easy',
-        check: (start, end, history) => Math.abs(history.totalRotation) > 10 && (end.ledLeftColor !== 'black' || end.ledRightColor !== 'black')
+        check: (start, end, history) => Math.abs(history.totalRotation) > 10 && (end.ledLeftColor !== 'black' || end.ledRightColor !== 'black'),
+        startPosition: { x: 0, z: 15 },
+        startRotation: 180,
+        startCameraPosition: [15, 22, 22]
     },
     
     // --- GROUP 2: OBSTACLES ---
@@ -175,12 +181,5 @@ export const CHALLENGES: Challenge[] = [
         description: 'מצא חפץ בחדר (אולטרסוניק), סע אליו והבהב באורות כשהגעת.',
         difficulty: 'Hard',
         check: (start, end, history) => !history.touchedWall && history.maxDistanceMoved > 10 && end.ledLeftColor !== 'black'
-    },
-    {
-        id: 'c22',
-        title: 'משימת חניה מדויקת',
-        description: 'עבור דרך ה"שער" וחדנה בדיוק על המשטח הכחול מבלי להתנגש בקירות.',
-        difficulty: 'Hard',
-        check: (start, end, history) => !history.touchedWall && history.detectedColors.includes('blue') && history.maxDistanceMoved > 10
     }
 ];

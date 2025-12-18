@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { Grid, Environment as DreiEnvironment, ContactShadows, Text } from '@react-three/drei';
+import { CHALLENGES } from '../data/challenges';
 import '../types';
 
 interface EnvironmentProps {
@@ -16,10 +17,13 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
       const isLineFollow = ['c21'].includes(challengeId || '');
       const isSlope = challengeId === 'c3';
       const isBrakingTrack = challengeId === 'c4';
-      const isTrafficLightTrack = challengeId === 'c5';
-      const isParkingMission = challengeId === 'c22';
+      const isNavigationTrack = challengeId === 'c1';
+      const isIntersection = challengeId === 'c6';
 
-      return { isFrontWall, isSlalom, isColors, isLineFollow, isSlope, isBrakingTrack, isTrafficLightTrack, isParkingMission };
+      const currentChallenge = CHALLENGES.find(c => c.id === challengeId);
+      const startPos = currentChallenge?.startPosition ?? { x: 0, z: 0 };
+
+      return { isFrontWall, isSlalom, isColors, isLineFollow, isSlope, isBrakingTrack, isNavigationTrack, isIntersection, startPos };
   }, [challengeId]);
 
   return (
@@ -53,68 +57,111 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
 
       <ContactShadows resolution={1024} scale={20} blur={2} opacity={0.5} far={10} color="#000000" />
       
-      {/* Starting Box */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+      {/* Starting Box - Positioned based on current challenge */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[config.startPos.x, 0.02, config.startPos.z]}>
         <ringGeometry args={[1.4, 1.5, 4, 1, Math.PI/4]} />
         <meshBasicMaterial color="#ff0000" />
       </mesh>
 
-      {/* TRAFFIC LIGHT TRACK for c5 */}
-      {config.isTrafficLightTrack && (
-          <group position={[0, 0, 0]}>
-              {/* Road Asphalt */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -10]} receiveShadow>
-                  <planeGeometry args={[4.5, 22]} />
-                  <meshStandardMaterial color="#2d3748" />
+      {/* CROSS INTERSECTION (צומת צלב) for c6 */}
+      {config.isIntersection && (
+          <group position={[0, 0.01, 0]}>
+              {/* Main Asphalt Roads */}
+              {/* Road North-South */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
+                  <planeGeometry args={[6, 50]} />
+                  <meshStandardMaterial color="#1a1a1a" />
               </mesh>
-              {/* Center Line Markers */}
-              {[...Array(6)].map((_, i) => (
-                  <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, -2 - i * 4]}>
-                      <planeGeometry args={[0.12, 1.5]} />
+              {/* Road East-West */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
+                  <planeGeometry args={[50, 6]} />
+                  <meshStandardMaterial color="#1a1a1a" />
+              </mesh>
+
+              {/* Edge Lines - Vertical (North-South) */}
+              {[-3.05, 3.05].map(x => (
+                  <mesh key={`edge-v-${x}`} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.01, 0]}>
+                      <planeGeometry args={[0.1, 50]} />
                       <meshBasicMaterial color="white" />
                   </mesh>
               ))}
-              {/* Stop Line */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, -10]}>
-                  <planeGeometry args={[4.5, 0.6]} />
-                  <meshBasicMaterial color="white" />
-              </mesh>
-              <Text 
-                position={[0, 0.05, -9.2]} 
-                rotation={[-Math.PI/2, 0, 0]} 
-                fontSize={0.6} 
-                color="white"
-                anchorX="center"
-                anchorY="middle"
-              >
-                STOP
-              </Text>
-
-              {/* Decorative Traffic Light Pillars */}
-              {[[-2.6, -10], [2.6, -10]].map(([x, z], idx) => (
-                  <group key={idx} position={[x, 0, z]}>
-                      {/* Pole */}
-                      <mesh position={[0, 1, 0]} castShadow>
-                          <cylinderGeometry args={[0.1, 0.12, 2, 16]} />
-                          <meshStandardMaterial color="#4a5568" />
-                      </mesh>
-                      {/* Light Housing */}
-                      <mesh position={[0, 2.2, 0]} castShadow>
-                          <boxGeometry args={[0.5, 1, 0.5]} />
-                          <meshStandardMaterial color="#1a202c" />
-                      </mesh>
-                      {/* Red Light */}
-                      <mesh position={[0, 2.45, 0.26]}>
-                          <circleGeometry args={[0.15, 24]} />
-                          <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={2} />
-                      </mesh>
-                      {/* Green Light */}
-                      <mesh position={[0, 1.95, 0.26]}>
-                          <circleGeometry args={[0.15, 24]} />
-                          <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} />
-                      </mesh>
-                  </group>
+              {/* Edge Lines - Horizontal (East-West) */}
+              {[-3.05, 3.05].map(z => (
+                  <mesh key={`edge-h-${z}`} rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.01, z]}>
+                      <planeGeometry args={[0.1, 50]} />
+                      <meshBasicMaterial color="white" />
+                  </mesh>
               ))}
+
+              {/* Lane Dividers (Dashed) */}
+              {[...Array(16)].map((_, i) => {
+                  const pos = (i - 8) * 3 + 1.5;
+                  if (Math.abs(pos) < 3.5) return null; // Don't draw in the middle of intersection
+                  return (
+                      <React.Fragment key={i}>
+                          {/* Vertical Dashes */}
+                          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, pos]}>
+                              <planeGeometry args={[0.1, 1.5]} />
+                              <meshBasicMaterial color="white" />
+                          </mesh>
+                          {/* Horizontal Dashes */}
+                          <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[pos, 0.015, 0]}>
+                              <planeGeometry args={[0.1, 1.5]} />
+                              <meshBasicMaterial color="white" />
+                          </mesh>
+                      </React.Fragment>
+                  );
+              })}
+
+              {/* Stop Lines */}
+              {[
+                {p: [0, 0.02, 3.2], r: [0, 0, 0]},
+                {p: [0, 0.02, -3.2], r: [0, 0, 0]},
+                {p: [3.2, 0.02, 0], r: [0, 0, Math.PI/2]},
+                {p: [-3.2, 0.02, 0], r: [0, 0, Math.PI/2]}
+              ].map((line, i) => (
+                  <mesh key={i} rotation={[-Math.PI / 2, ...line.r]} position={line.p}>
+                      <planeGeometry args={[6, 0.3]} />
+                      <meshBasicMaterial color="white" />
+                  </mesh>
+              ))}
+
+              <Text position={[0, 0.5, -12]} rotation={[0, 0, 0]} fontSize={0.6} color="#333" outlineWidth={0.05} outlineColor="white">
+                צומת דרכים
+              </Text>
+          </group>
+      )}
+
+      {/* NAVIGATION TRACK for c1 (L-Shape) */}
+      {config.isNavigationTrack && (
+          <group position={[0, 0, 0]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -5]} receiveShadow>
+                  <planeGeometry args={[2.5, 10]} />
+                  <meshStandardMaterial color="#bae6fd" transparent opacity={0.9} />
+              </mesh>
+              {[...Array(5)].map((_, i) => (
+                  <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -i * 2 - 1]}>
+                      <planeGeometry args={[0.15, 1.2]} />
+                      <meshBasicMaterial color="#0284c7" />
+                  </mesh>
+              ))}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.5, 0.015, -10]} receiveShadow>
+                  <planeGeometry args={[5, 2.5]} />
+                  <meshStandardMaterial color="#bae6fd" transparent opacity={0.9} />
+              </mesh>
+              {[...Array(3)].map((_, i) => (
+                  <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[i * 2 + 1, 0.02, -10]}>
+                      <planeGeometry args={[1.2, 0.15]} />
+                      <meshBasicMaterial color="#0284c7" />
+                  </mesh>
+              ))}
+              <Text position={[0, 0.05, 1.5]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.5} color="#0369a1">START</Text>
+              <Text position={[0, 0.05, -11.8]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.4} color="#0369a1">TURN 90° RIGHT</Text>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[5, 0.025, -10]}>
+                  <ringGeometry args={[0.8, 1.1, 32]} />
+                  <meshBasicMaterial color="#16a34a" />
+              </mesh>
+              <Text position={[5, 0.05, -8.2]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.5} color="#15803d">FINISH</Text>
           </group>
       )}
 
@@ -137,57 +184,28 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
                   <boxGeometry args={[4.2, 1.0, 8]} />
                   <meshStandardMaterial color="#ffffff" />
               </mesh>
-              <Text position={[0, 1.1, -20]} fontSize={0.6} color="#ff4d4d">
-                FINISH
-              </Text>
+              <Text position={[0, 1.1, -20]} fontSize={0.6} color="#ff4d4d">FINISH</Text>
           </group>
       )}
 
-      {/* BRAKING TRACK for c4 (Braking test) */}
+      {/* BRAKING TRACK for c4 */}
       {config.isBrakingTrack && (
           <group position={[0, 0, 0]}>
-              {/* Asphalt Lane */}
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -15]} receiveShadow>
                   <planeGeometry args={[5, 30]} />
                   <meshStandardMaterial color="#334155" />
               </mesh>
-              
-              {/* White Side Lines */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2.4, 0.03, -15]}>
-                  <planeGeometry args={[0.1, 30]} />
-                  <meshBasicMaterial color="white" />
-              </mesh>
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.4, 0.03, -15]}>
-                  <planeGeometry args={[0.1, 30]} />
-                  <meshBasicMaterial color="white" />
-              </mesh>
-
-              {/* Distance Markers */}
               {[...Array(31)].map((_, i) => (
                   <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, -i]}>
                       <planeGeometry args={[4.8, 0.05]} />
                       <meshBasicMaterial color={i % 5 === 0 ? "white" : "#475569"} />
                   </mesh>
               ))}
-
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, -28]}>
                   <planeGeometry args={[5, 4]} />
                   <meshStandardMaterial color="#ef4444" opacity={0.6} transparent />
               </mesh>
-
-              <Text position={[0, 0.05, -2]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.4} color="white">
-                BRAKING TEST
-              </Text>
-              
-              <Text position={[-3, 0.05, -10]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="#475569">
-                100 CM
-              </Text>
-              <Text position={[-3, 0.05, -20]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="#475569">
-                200 CM
-              </Text>
-              <Text position={[0, 0.1, -30]} fontSize={0.6} color="#ef4444">
-                DANGER!
-              </Text>
+              <Text position={[0, 0.1, -30]} fontSize={0.6} color="#ef4444">DANGER!</Text>
           </group>
       )}
 
@@ -209,35 +227,6 @@ const SimulationEnvironment: React.FC<EnvironmentProps> = ({ challengeId }) => {
                 <meshStandardMaterial color="#ef4444" roughness={0.2} />
             </mesh>
             <Text position={[0, 0.2, 0.3]} fontSize={0.4} color="white">OBSTACLE</Text>
-          </group>
-      )}
-
-      {/* PARKING MISSION c22 */}
-      {config.isParkingMission && (
-          <group>
-              <group position={[0, 0.5, -6]}>
-                  <mesh position={[-2, 0, 0]} castShadow receiveShadow>
-                      <boxGeometry args={[2, 1, 0.3]} />
-                      <meshStandardMaterial color="#ef4444" />
-                  </mesh>
-                  <mesh position={[2, 0, 0]} castShadow receiveShadow>
-                      <boxGeometry args={[2, 1, 0.3]} />
-                      <meshStandardMaterial color="#ef4444" />
-                  </mesh>
-                  <Text position={[0, 1.2, 0]} fontSize={0.4} color="#ef4444">GATE</Text>
-              </group>
-
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -12]}>
-                  <planeGeometry args={[2, 2]} />
-                  <meshBasicMaterial color="#0000FF" />
-              </mesh>
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -12]}>
-                  <planeGeometry args={[2.4, 2.4]} />
-                  <meshBasicMaterial color="#ffffff" />
-              </mesh>
-              <Text position={[0, 0.05, -12]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="white">
-                PARKING
-              </Text>
           </group>
       )}
 

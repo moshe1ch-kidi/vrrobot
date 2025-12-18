@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Wifi, HandMetal, Compass, Palette, Pipette } from 'lucide-react';
 
@@ -46,7 +47,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
   const isOverrideActive = !!overrideColor;
 
   return (
-    <div className={`absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border flex items-center justify-around z-10 transition-all ${
+    <div dir="rtl" className={`absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border flex items-center justify-around z-10 transition-all ${
         isOverrideActive ? 'border-pink-500 ring-2 ring-pink-500 ring-opacity-50' : 'border-slate-200'
     }`}>
       
@@ -54,10 +55,10 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
       <div className={`flex flex-col items-center gap-1 min-w-[80px] ${isOverrideActive ? 'opacity-40' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Wifi size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider">Distance</span>
+            <span className="text-xs font-bold uppercase tracking-wider">מרחק</span>
         </div>
-        <div className="text-2xl font-mono font-bold text-slate-800">
-            {distance < 255 ? distance : '> 255'} <span className="text-sm text-slate-400">cm</span>
+        <div className="text-2xl font-mono font-bold text-slate-800" dir="ltr">
+            {distance < 255 ? distance : '> 255'} <span className="text-sm text-slate-400 font-sans">ס"מ</span>
         </div>
       </div>
 
@@ -67,9 +68,9 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
       <div className={`flex flex-col items-center gap-1 min-w-[80px] ${isOverrideActive ? 'opacity-40' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Compass size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider">Gyro</span>
+            <span className="text-xs font-bold uppercase tracking-wider">זווית (גירו)</span>
         </div>
-        <div className="text-2xl font-mono font-bold text-slate-800">
+        <div className="text-2xl font-mono font-bold text-slate-800" dir="ltr">
             {gyroAngle}°
         </div>
       </div>
@@ -80,14 +81,14 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
       <div className={`flex flex-col items-center gap-1 min-w-[80px] ${isOverrideActive ? 'opacity-40' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 text-slate-500 mb-1">
             <HandMetal size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider">Touch</span>
+            <span className="text-xs font-bold uppercase tracking-wider">מגע</span>
         </div>
         <div className={`px-3 py-1 rounded-full text-sm font-bold border ${
             isTouching 
                 ? 'bg-red-100 text-red-600 border-red-200' 
                 : 'bg-slate-100 text-slate-400 border-slate-200'
         }`}>
-            {isTouching ? 'PRESSED' : 'RELEASED'}
+            {isTouching ? 'לחוץ' : 'משוחרר'}
         </div>
       </div>
 
@@ -101,12 +102,12 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
                 ? 'bg-pink-50 border-pink-200' 
                 : 'hover:bg-slate-100 hover:border-slate-200'
         }`}
-        title={isOverrideActive ? "Click to stop sampling" : "Click to sample color"}
+        title={isOverrideActive ? "לחץ להפסקת דגימה" : "לחץ לדגימת צבע"}
       >
         <div className={`flex items-center gap-2 mb-1 ${isOverrideActive ? 'text-pink-600' : 'text-slate-500'}`}>
             {isOverrideActive ? <Pipette size={18} className="animate-bounce" /> : <Palette size={18} />}
             <span className="text-xs font-bold uppercase tracking-wider">
-                {isOverrideActive ? 'Sampling...' : 'Detected Color'}
+                {isOverrideActive ? 'דוגם...' : 'צבע מזוהה'}
             </span>
         </div>
         
@@ -125,7 +126,7 @@ const SensorDashboard: React.FC<SensorDashboardProps> = ({
             </div>
             {!isOverrideActive && (
                 <div className="text-xs text-slate-500 font-mono">
-                    Intensity: {lightIntensity}%
+                    עוצמה: {lightIntensity}%
                 </div>
             )}
             {/* Show Hex Code underneath if sampling */}

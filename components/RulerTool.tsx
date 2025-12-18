@@ -50,15 +50,15 @@ const RulerTool: React.FC = () => {
                 <meshBasicMaterial visible={false} />
             </mesh>
 
-            {/* Helper UI Text (Top Center) - Minimalist & Transparent */}
+            {/* Helper UI Text (Top Center) - Now Transparent */}
             <Html position={[0, 0, 0]} fullscreen style={{pointerEvents: 'none', zIndex: 0}}>
-                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                    <div className={`px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20 shadow-lg font-bold text-xs transition-all ${
-                        isMeasuring ? 'bg-yellow-500/80 text-white' : 'bg-blue-600/60 text-white'
+                <div className="absolute top-24 left-1/2 transform -translate-x-1/2 flex flex-col items-center" dir="rtl">
+                    <div className={`px-6 py-2 rounded-full shadow-lg font-bold text-sm transition-all backdrop-blur-sm border border-white/20 ${
+                        isMeasuring ? 'bg-yellow-500/40 text-yellow-900' : 'bg-blue-600/40 text-white'
                     }`}>
-                        {!isMeasuring && !start ? "Click anywhere to start measuring" : 
-                         isMeasuring ? "Move mouse and click again to finish" : 
-                         "Click anywhere for a new measurement"}
+                        {!isMeasuring && !start ? "לחץ על הבמה כדי להתחיל מדידה" : 
+                         isMeasuring ? "הזז את העכבר ולחץ שוב לסיום" : 
+                         "לחץ בכל מקום למדידה חדשה"}
                     </div>
                 </div>
             </Html>
@@ -66,15 +66,18 @@ const RulerTool: React.FC = () => {
             {/* Start Marker (Green) */}
             {start && (
                 <mesh position={start}>
-                    <sphereGeometry args={[0.08, 16, 16]} />
+                    <sphereGeometry args={[0.15, 16, 16]} />
                     <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.5} />
+                    <Html position={[0, 0.3, 0]}>
+                        <div className="bg-green-600/60 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">התחלה</div>
+                    </Html>
                 </mesh>
             )}
 
             {/* End Marker (Red - Visible when moving or finished) */}
             {end && (
                 <mesh position={end}>
-                    <sphereGeometry args={[0.08, 16, 16]} />
+                    <sphereGeometry args={[0.15, 16, 16]} />
                     <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.5} />
                 </mesh>
             )}
@@ -84,9 +87,9 @@ const RulerTool: React.FC = () => {
                 <>
                     <Line
                         points={[start, end]}
-                        color={isMeasuring ? "#fbbf24" : "#1e40af"} // Gold while measuring, Dark blue when done
-                        lineWidth={2}
-                        dashed={isMeasuring}
+                        color={isMeasuring ? "#eab308" : "black"} // Yellow while measuring, Black when done
+                        lineWidth={3}
+                        dashed={isMeasuring} // Dashed while measuring
                         dashScale={10}
                         gapSize={5}
                     />
@@ -94,12 +97,12 @@ const RulerTool: React.FC = () => {
                     {/* Distance Label (Always visible if distance > 0) */}
                     {(distance > 0.01) && (
                         <Html position={new Vector3().lerpVectors(start, end, 0.5)} zIndexRange={[100, 0]}>
-                            <div className={`px-2 py-0.5 rounded-lg shadow-xl font-mono font-bold text-xs whitespace-nowrap transform -translate-y-6 border backdrop-blur-sm transition-all ${
+                            <div className={`px-2 py-1 rounded-md shadow-lg font-mono font-bold text-sm whitespace-nowrap transform -translate-y-8 border-2 backdrop-blur-md ${
                                 isMeasuring 
-                                ? 'bg-white/60 border-yellow-500 text-yellow-900' 
-                                : 'bg-white/80 border-blue-500 text-blue-900'
+                                ? 'bg-yellow-100/60 border-yellow-500/50 text-yellow-900' 
+                                : 'bg-white/60 border-blue-500/50 text-blue-900'
                             }`}>
-                                {distanceCm} cm
+                                {distanceCm} ס"מ
                             </div>
                         </Html>
                     )}
