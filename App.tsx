@@ -223,6 +223,11 @@ const App: React.FC = () => {
           const ch = "#" + rawDecimalColor.toString(16).toUpperCase().padStart(6, '0');
           return th.toUpperCase() === ch.toUpperCase();
       },
+      broadcast: async (msgColor: string) => {
+          console.log(`Broadcast message sent: ${msgColor}`);
+          // Multi-thread broadcast logic would go here if execution allowed
+          await new Promise(r => setTimeout(r, 100));
+      },
       getCircumference: async () => 3.77
   });
 
