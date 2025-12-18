@@ -1,9 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { initBlockly, toolbox, getScratchTheme } from '../services/blocklySetup';
 
 interface BlocklyEditorProps {
   onCodeChange: (code: string) => void;
   onEval?: (code: string) => Promise<any>;
+}
+
+export interface BlocklyEditorHandle {
+    getXml: () => string;
+    setXml: (xml: string) => void;
 }
 
 // Bubble Component for displaying block values
@@ -18,7 +24,7 @@ const BlockBubble = ({ x, y, value }: { x: number, y: number, value: string | nu
     </div>
 );
 
-const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) => {
+const BlocklyEditor = forwardRef<BlocklyEditorHandle, BlocklyEditorProps>(({ onCodeChange, onEval }, ref) => {
   const blocklyDiv = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<any>(null);
   const [bubble, setBubble] = useState<{x: number, y: number, value: any} | null>(null);
@@ -32,6 +38,27 @@ const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) =
     onCodeChangeRef.current = onCodeChange;
     onEvalRef.current = onEval;
   }, [onCodeChange, onEval]);
+
+  // Expose getXml and setXml to parent
+  useImperativeHandle(ref, () => ({
+    getXml: () => {
+        const Blockly = (window as any).Blockly;
+        if (!workspaceRef.current) return '';
+        const xmlDom = Blockly.Xml.workspaceToDom(workspaceRef.current);
+        return Blockly.Xml.domToPrettyText(xmlDom);
+    },
+    setXml: (xmlText: string) => {
+        const Blockly = (window as any).Blockly;
+        if (!workspaceRef.current) return;
+        try {
+            const xmlDom = Blockly.utils.xml.textToDom(xmlText);
+            workspaceRef.current.clear();
+            Blockly.Xml.domToWorkspace(xmlDom, workspaceRef.current);
+        } catch (e) {
+            console.error("Failed to load project XML", e);
+        }
+    }
+  }));
 
   useEffect(() => {
     // Access globally loaded Blockly here inside useEffect to ensures scripts are loaded
@@ -83,7 +110,6 @@ const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) =
         }
 
         // Handle Click for Evaluation (Bubbles)
-        // Check if onEval exists via Ref
         if (e.type === Blockly.Events.CLICK && onEvalRef.current) {
             const blockId = e.blockId;
             if (!blockId) return;
@@ -99,8 +125,6 @@ const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) =
                     
                     if (code) {
                         onEvalRef.current(code).then((result: any) => {
-                           // Calculate screen position of the block
-                           // Use getSvgRoot() instead of getSvgGroup() which doesn't exist on all versions
                            const svgRoot = (block as any).getSvgRoot();
                            if (svgRoot) {
                                const rect = svgRoot.getBoundingClientRect();
@@ -145,8 +169,6 @@ const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) =
         workspaceRef.current = null;
       }
     };
-  // FIXED: Empty dependency array ensures Blockly is only injected ONCE
-  // and not destroyed when React state changes (like showing a bubble)
   }, []); 
 
   return (
@@ -155,6 +177,6 @@ const BlocklyEditor: React.FC<BlocklyEditorProps> = ({ onCodeChange, onEval }) =
       {bubble && <BlockBubble x={bubble.x} y={bubble.y} value={bubble.value} />}
     </div>
   );
-};
+});
 
 export default BlocklyEditor;

@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { Play, RotateCcw, Code2, Ruler, Trophy, CheckCircle, X, Video, Square, Flag } from 'lucide-react';
+import { Play, RotateCcw, Code2, Ruler, Trophy, CheckCircle, X, Video, Square, Flag, Save, FolderOpen } from 'lucide-react';
 import { Vector3 } from 'three';
-import BlocklyEditor from './components/BlocklyEditor';
+import BlocklyEditor, { BlocklyEditorHandle } from './components/BlocklyEditor';
 import Robot3D from './components/Robot3D';
 import SimulationEnvironment from './components/Environment';
 import { RobotState } from './types';
@@ -120,6 +120,10 @@ const App: React.FC = () => {
   const [showChallenges, setShowChallenges] = useState(false);
   const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null);
   const [challengeSuccess, setChallengeSuccess] = useState(false);
+
+  // Refs for Blockly control
+  const editorRef = useRef<BlocklyEditorHandle>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const historyRef = useRef<SimulationHistory>({
       maxDistanceMoved: 0, touchedWall: false, detectedColors: [], totalRotation: 0
@@ -282,6 +286,41 @@ const App: React.FC = () => {
       setIsColorPickerActive(false);
   };
 
+  const handleSave = () => {
+      if (!editorRef.current) return;
+      const xml = editorRef.current.getXml();
+      const blob = new Blob([xml], { type: 'text/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `robot_project_${new Date().toISOString().slice(0, 10)}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+  };
+
+  const handleLoad = () => {
+      if (fileInputRef.current) {
+          fileInputRef.current.click();
+      }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          const content = event.target?.result as string;
+          if (editorRef.current) {
+              editorRef.current.setXml(content);
+          }
+      };
+      reader.readAsText(file);
+      // Reset input to allow loading the same file again
+      e.target.value = '';
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <header className="bg-slate-800 text-white p-4 flex justify-between items-center shadow-md z-10" dir="rtl">
@@ -318,6 +357,25 @@ const App: React.FC = () => {
                     </button>
                 </div>
 
+                {/* Save/Load Cluster (Icons only) */}
+                <div className="flex items-center gap-1 bg-slate-900/40 p-1 rounded-xl border border-slate-700">
+                    <button 
+                        onClick={handleSave} 
+                        className="p-1.5 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 text-green-400 rounded-lg transition-all flex items-center justify-center"
+                        title="שמור פרויקט"
+                    >
+                        <Save size={22} />
+                    </button>
+                    <button 
+                        onClick={handleLoad} 
+                        className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400 rounded-lg transition-all flex items-center justify-center"
+                        title="טען פרויקט"
+                    >
+                        <FolderOpen size={22} />
+                    </button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".xml" onChange={onFileChange} />
+                </div>
+
                 {/* Ruler Tool */}
                 <button 
                     onClick={toggleRuler} 
@@ -352,7 +410,7 @@ const App: React.FC = () => {
         {/* Left Side: Code Editor */}
         <div className="w-1/2 border-r border-slate-300 relative flex flex-col">
             <div className="flex-1 relative">
-                <BlocklyEditor onCodeChange={setGeneratedCode} onEval={useCallback(async (s) => {
+                <BlocklyEditor ref={editorRef} onCodeChange={setGeneratedCode} onEval={useCallback(async (s) => {
                     const robot = createRobotApi(new AbortController().signal);
                     try { return await new Function('robot', `return (async () => { return ${s} })();`)(robot); } catch { return "Error"; }
                 }, [])} />
