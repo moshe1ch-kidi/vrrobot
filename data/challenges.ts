@@ -23,7 +23,7 @@ export const CHALLENGES: Challenge[] = [
         title: 'כיוונים - ניווט בחדר',
         description: 'סע 1 מטר קדימה, פנה ימינה ב-90 מעלות וסע עוד חצי מטר.',
         difficulty: 'Easy',
-        check: (start, end, history) => history.maxDistanceMoved >= 11 && Math.abs(history.totalRotation) >= 85
+        check: (start, end, history) => history.maxDistanceMoved >= 12 && Math.abs(history.totalRotation) >= 85
     },
     {
         id: 'c2',
@@ -175,5 +175,12 @@ export const CHALLENGES: Challenge[] = [
         description: 'מצא חפץ בחדר (אולטרסוניק), סע אליו והבהב באורות כשהגעת.',
         difficulty: 'Hard',
         check: (start, end, history) => !history.touchedWall && history.maxDistanceMoved > 10 && end.ledLeftColor !== 'black'
+    },
+    {
+        id: 'c22',
+        title: 'משימת חניה מדויקת',
+        description: 'עבור דרך ה"שער" וחדנה בדיוק על המשטח הכחול מבלי להתנגש בקירות.',
+        difficulty: 'Hard',
+        check: (start, end, history) => !history.touchedWall && history.detectedColors.includes('blue') && history.maxDistanceMoved > 10
     }
 ];
